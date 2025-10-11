@@ -1,0 +1,36 @@
+# Configuration file for agents
+# This file contains default settings and can be customized for your needs
+
+# Default agent configuration
+default_agent_config:
+  processing_delay: 0.1
+  max_length: 1000
+  log_level: "INFO"
+  
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "agents.log"
+  
+# Manager configuration
+manager:
+  name: "DefaultAgentManager"
+  max_concurrent_tasks: 10
+  task_timeout: 30
+  
+# Example agent configurations
+agents:
+  text_processor:
+    class: "ExampleAgent"
+    config:
+      prefix: "📝 Processed: "
+      processing_delay: 0.05
+      max_length: 500
+      
+  data_analyzer:
+    class: "ExampleAgent"
+    config:
+      prefix: "📊 Analyzed: "
+      processing_delay: 0.2
+      max_length: 2000
