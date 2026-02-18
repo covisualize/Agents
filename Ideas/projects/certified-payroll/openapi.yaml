@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Certified Payroll API
+  version: 0.2.0
+paths:
+  /health:
+    get:
+      summary: Service health
+      responses:
+        '200':
+          description: Healthy
+  /api/bootstrap:
+    get:
+      summary: Get seeded organization and actor for local development
+      responses:
+        '200':
+          description: Bootstrap payload
+  /api/projects:
+    post:
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created
+  /api/projects/{projectId}/workers:
+    post:
+      summary: Create worker for project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkerRequest'
+      responses:
+        '201':
+          description: Worker created
+  /api/projects/{projectId}/timesheets:
+    post:
+      summary: Create timesheet entry
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTimesheetEntryRequest'
+      responses:
+        '201':
+          description: Timesheet entry created
+  /api/payroll-runs/generate:
+    post:
+      summary: Generate payroll run for date range
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneratePayrollRunRequest'
+      responses:
+        '201':
+          description: Payroll run generated
+  /api/projects/{projectId}/payroll-runs:
+    get:
+      summary: List payroll runs by project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payroll runs
+  /api/reports/{reportId}:
+    get:
+      summary: Get report
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report details
+  /api/reports/{reportId}/submit:
+    post:
+      summary: Submit report
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report submitted
+  /api/reports/{reportId}/rejections:
+    post:
+      summary: Reject report and create next revision
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRejectionRequest'
+      responses:
+        '201':
+          description: Rejection created
+  /api/webhooks/stripe:
+    post:
+      summary: Process Stripe webhook event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeWebhookEvent'
+      responses:
+        '200':
+          description: Webhook processed
+components:
+  schemas:
+    ActorFields:
+      type: object
+      properties:
+        actorUserId:
+          type: string
+        actorRole:
+          type: string
+          enum: [owner, admin, member]
+    CreateProjectRequest:
+      allOf:
+        - $ref: '#/components/schemas/ActorFields'
+        - type: object
+          required: [organizationId, name]
+          properties:
+            organizationId:
+              type: string
+            name:
+              type: string
+            contractNumber:
+              type: string
+    CreateWorkerRequest:
+      allOf:
+        - $ref: '#/components/schemas/ActorFields'
+        - type: object
+          required: [fullName, classification]
+          properties:
+            fullName:
+              type: string
+            classification:
+              type: string
+            fringeRate:
+              type: number
+    CreateTimesheetEntryRequest:
+      allOf:
+        - $ref: '#/components/schemas/ActorFields'
+        - type: object
+          required: [workerId, workDate, hours, wageRate]
+          properties:
+            workerId:
+              type: string
+            workDate:
+              type: string
+              format: date
+            hours:
+              type: number
+            wageRate:
+              type: number
+    GeneratePayrollRunRequest:
+      allOf:
+        - $ref: '#/components/schemas/ActorFields'
+        - type: object
+          required: [projectId, periodStart, periodEnd]
+          properties:
+            projectId:
+              type: string
+            periodStart:
+              type: string
+              format: date
+            periodEnd:
+              type: string
+              format: date
+    CreateRejectionRequest:
+      allOf:
+        - $ref: '#/components/schemas/ActorFields'
+        - type: object
+          required: [notes]
+          properties:
+            reasonCode:
+              type: string
+              enum: [hours_mismatch, classification_mismatch, fringe_mismatch, other]
+            notes:
+              type: string
+    StripeWebhookEvent:
+      type: object
+      required: [id, type]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        data:
+          type: object

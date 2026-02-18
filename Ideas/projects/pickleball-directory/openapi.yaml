@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: Pickleball Directory API
+  version: 0.2.0
+paths:
+  /health:
+    get:
+      summary: Service health
+      responses:
+        '200':
+          description: Healthy
+  /api/bootstrap:
+    get:
+      summary: Get seeded account and listing for local development
+      responses:
+        '200':
+          description: Bootstrap payload
+  /api/listings:
+    get:
+      summary: Query listings
+      parameters:
+        - in: query
+          name: metro
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [venue, club, coach]
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Listing page
+  /api/submissions:
+    post:
+      summary: Submit listing suggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubmissionRequest'
+      responses:
+        '201':
+          description: Submission accepted
+  /api/listings/{listingId}/claim:
+    post:
+      summary: Claim listing ownership
+      parameters:
+        - in: path
+          name: listingId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimListingRequest'
+      responses:
+        '202':
+          description: Claim queued
+  /api/claims/{claimId}/resolve:
+    post:
+      summary: Resolve claim
+      parameters:
+        - in: path
+          name: claimId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveClaimRequest'
+      responses:
+        '200':
+          description: Claim resolved
+  /api/listings/{listingId}/feature:
+    post:
+      summary: Enable sponsored slot for listing
+      parameters:
+        - in: path
+          name: listingId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnableSponsorshipRequest'
+      responses:
+        '200':
+          description: Sponsored slot created
+  /api/listings/ingest:
+    post:
+      summary: Run ingestion for listing batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestionRequest'
+      responses:
+        '200':
+          description: Ingestion complete
+  /api/webhooks/stripe:
+    post:
+      summary: Process Stripe webhook event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeWebhookEvent'
+      responses:
+        '200':
+          description: Webhook processed
+components:
+  schemas:
+    CreateSubmissionRequest:
+      type: object
+      required: [name, metro, listingType]
+      properties:
+        name:
+          type: string
+        metro:
+          type: string
+        listingType:
+          type: string
+          enum: [venue, club, coach]
+        website:
+          type: string
+        submittedByEmail:
+          type: string
+          format: email
+    ClaimListingRequest:
+      type: object
+      required: [claimantEmail, verificationNote]
+      properties:
+        claimantEmail:
+          type: string
+          format: email
+        verificationNote:
+          type: string
+    ResolveClaimRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+    EnableSponsorshipRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+    IngestionRequest:
+      type: object
+      required: [source]
+      properties:
+        source:
+          type: string
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              metro:
+                type: string
+              listingType:
+                type: string
+                enum: [venue, club, coach]
+              website:
+                type: string
+    StripeWebhookEvent:
+      type: object
+      required: [id, type]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        data:
+          type: object
