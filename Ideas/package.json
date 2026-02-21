@@ -1,0 +1,15 @@
+{
+  "name": "ideas-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "projects/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/shared-core/tests/*.test.mjs projects/certified-payroll/tests/*.test.mjs projects/pickleball-directory/tests/*.test.mjs",
+    "start:payroll": "node projects/certified-payroll/src/server.js",
+    "start:directory": "node projects/pickleball-directory/src/server.js"
+  }
+}
